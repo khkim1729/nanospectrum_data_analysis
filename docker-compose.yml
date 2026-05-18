@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+      - /data/hsi_fm_bench_123/more_projects/all_nano_data_analysis/nano_data_analysis/data:/data
+    environment:
+      - DATA_PATH=/data
+    restart: always
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: always
+
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "25025:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: always

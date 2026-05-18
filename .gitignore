@@ -1,0 +1,20 @@
+# Data directory (contains 5.4GB of raw scans)
+data/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
+# Python backend cache and virtual envs
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/uploads/*
+**/__pycache__/
+*.pyc
+
+# Local env files
+.env
+.env.local
+
+# OS files
+.DS_Store
