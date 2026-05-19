@@ -10,12 +10,16 @@ The application features a premium, interactive tabbed navigation layout allowin
 
 ### 1. RAW ↔ CSV 비교 (RAW vs CSV Comparison)
 - **Individual Analysis Mode**: Select a single Ozray linescan capture (`.png` preview matched automatically with `.raw` cube and `.hdr` metadata) alongside NanoLambda reference sensor files (`.csv`).
-- **Interactive Multi-Point Selection**: Click on the linescan image preview to place precise coordinate points.
-- **Unified Chart Comparison**: Overlays the pixel-level spectral curves directly with the references from the NanoLambda sensor.
+- **Interactive Multi-Point Selection**: Click on the linescan image preview to place precise coordinate points, dynamically tracked with persistent color codes.
+- **Independent Scaling & Processing**:
+  - **Min-Max Normalization**: Scale Ozray raw data and NanoLambda reference curves independently to resolve scale discrepancies.
+  - **Moving Average Smoothing**: Apply a customizable moving average filter to reduce noise in RAW hyperspectral captures.
+- **Unified Chart Comparison**: Overlays the pixel-level spectral curves directly with the references from the NanoLambda sensor with active tooltips and color matching.
 
-### 2. RAW 겹쳐보기 (RAW Overlay / Multi-Image Comparison) [NEW]
+### 2. RAW 겹쳐보기 (RAW Overlay / Multi-Image Comparison)
 - **Multi-Image Comparative Gallery**: Select between **2 to 10** linescan captures from the Ozray dataset to analyze them side-by-side in a responsive, color-coded grid.
 - **Color-Coded Visual Identity**: Each selected file is dynamically assigned a unique, vibrant color from a curated palette. Image viewer borders, color tags, and spectrum lines are perfectly synchronized to represent that specific file's data.
+- **Full Filename Representation (Uncompressed)**: Displays full filenames in the comparison chart legend and the extracted points list, ensuring no loss of contextual information during comparisons.
 - **Synchronized Click Coordinates**: 
   - **Coordinate Synchronization (ON)**: Click anywhere on any active linescan image to automatically place points at the exact same `(x, y)` coordinate across *all* active overlays, fetching and overlaying all spectra simultaneously.
   - **Independent Clicking (OFF)**: Deactivate synchronization to click and compare points at different coordinates across the active images.

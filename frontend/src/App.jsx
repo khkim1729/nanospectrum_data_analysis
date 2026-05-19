@@ -660,7 +660,7 @@ function App() {
                             >
                               <Space>
                                 {isLoading && <Spin size="small" style={{ marginRight: 8 }} />}
-                                <Text ellipsis style={{ width: '250px', color: isSelected ? '#fff' : '#aaa' }}>{item.rel_path}</Text>
+                                <Text ellipsis={{ tooltip: item.rel_path }} style={{ width: '250px', color: isSelected ? '#fff' : '#aaa' }}>{item.rel_path}</Text>
                                 {isSelected && <Tag color={assignedColor}>Color Badge</Tag>}
                               </Space>
                             </List.Item>
@@ -706,7 +706,7 @@ function App() {
                                   title={
                                     <Space>
                                       <Badge color={assignedColor} />
-                                      <Text ellipsis style={{ maxWidth: '180px', color: '#fff', fontWeight: 'bold' }}>{file.name}</Text>
+                                      <Text style={{ color: '#fff', fontWeight: 'bold', wordBreak: 'break-all' }}>{file.name}</Text>
                                     </Space>
                                   }
                                   size="small" 
@@ -792,7 +792,7 @@ function App() {
                           data={overlayChartData} 
                           series={overlayPoints.map(p => ({
                             key: `overlay_${p.id}`,
-                            name: `${p.fileName.slice(0, 10)}... (${p.x}, ${p.y})`,
+                            name: `${p.fileName} (${p.x}, ${p.y})`,
                             color: p.color
                           }))} 
                         />
@@ -825,7 +825,7 @@ function App() {
                               style={{ borderLeft: `4px solid ${p.color}`, paddingLeft: '8px', marginBottom: '4px', background: '#141414', borderRadius: '4px' }}
                             >
                               <div style={{ display: 'flex', flexDirection: 'column', width: '90%' }}>
-                                <Text ellipsis style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>{p.fileName}</Text>
+                                <Text style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold', wordBreak: 'break-all' }}>{p.fileName}</Text>
                                 <Text style={{ color: '#aaa', fontSize: '11px' }}>Coordinate: ({p.x}, {p.y})</Text>
                               </div>
                             </List.Item>
