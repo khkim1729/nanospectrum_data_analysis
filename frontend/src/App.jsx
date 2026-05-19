@@ -19,7 +19,9 @@ import {
   Switch, 
   Tooltip,
   Badge,
-  Empty
+  Empty,
+  Collapse,
+  Segmented
 } from 'antd'
 import { 
   FileSearchOutlined, 
@@ -31,7 +33,14 @@ import {
   SyncOutlined,
   DeleteOutlined,
   BranchesOutlined,
-  SlidersOutlined
+  SlidersOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
+  FileTextOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined
 } from '@ant-design/icons'
 import axios from 'axios'
 import SpectrumChart from './components/SpectrumChart'
@@ -84,6 +93,274 @@ function App() {
   const [normalizeOverlay, setNormalizeOverlay] = useState(false)
   const [loadingOverlayFiles, setLoadingOverlayFiles] = useState({}) // { [path]: boolean }
   const [overlayChartData, setOverlayChartData] = useState([])
+
+  // File View Modes & Sorting
+  const [ozrayViewMode, setOzrayViewMode] = useState('list') // 'list' | 'thumbnail' | 'folder'
+  const [ozraySortOrder, setOzraySortOrder] = useState('asc') // 'asc' | 'desc'
+  
+  const [nanoViewMode, setNanoViewMode] = useState('list') // 'list' | 'thumbnail'
+  const [nanoSortOrder, setNanoSortOrder] = useState('asc') // 'asc' | 'desc'
+  
+  const [overlayViewMode, setOverlayViewMode] = useState('list') // 'list' | 'thumbnail' | 'folder'
+  const [overlaySortOrder, setOverlaySortOrder] = useState('asc') // 'asc' | 'desc'
+
+  const sortFilesByName = (files, order) => {
+    const sorted = [...files]
+    sorted.sort((a, b) => {
+      const nameA = (a.rel_path || a.name || '').toLowerCase()
+      const nameB = (b.rel_path || b.name || '').toLowerCase()
+      if (order === 'asc') {
+        return nameA.localeCompare(nameB)
+      } else {
+        return nameB.localeCompare(nameA)
+      }
+    })
+    return sorted
+  }
+
+  const groupFilesByFolder = (files) => {
+    const groups = {}
+    files.forEach(file => {
+      const pathParts = (file.rel_path || file.name || '').split('/')
+      let folder = 'Root'
+      if (pathParts.length > 1) {
+        folder = pathParts.slice(0, -1).join('/')
+      }
+      if (!groups[folder]) {
+        groups[folder] = []
+      }
+      groups[folder].push(file)
+    })
+    return groups
+  }
+
+  const renderListControls = (viewMode, setViewMode, sortOrder, setSortOrder, showFolderOption = true) => {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#262626', padding: '6px 10px', borderRadius: '4px', border: '1px solid #3d3d3d' }}>
+        <Segmented
+          size="small"
+          value={viewMode}
+          onChange={setViewMode}
+          options={[
+            { value: 'list', label: 'List', icon: <UnorderedListOutlined /> },
+            { value: 'thumbnail', label: 'Grid', icon: <AppstoreOutlined /> },
+            ...(showFolderOption ? [{ value: 'folder', label: 'Folders', icon: <FolderOpenOutlined /> }] : [])
+          ]}
+        />
+        <Button 
+          size="small" 
+          type="text" 
+          style={{ color: '#aaa' }}
+          icon={sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
+          {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
+        </Button>
+      </div>
+    )
+  }
+
+  const renderOzrayFiles = (files, viewMode, sortOrder, activeFile, onSelectAction, isOverlay = false) => {
+    const sorted = sortFilesByName(files, sortOrder)
+
+    const renderListItem = (item) => {
+      const isActive = isOverlay 
+        ? selectedOverlayFiles.some(f => f.path === item.path)
+        : activeFile?.path === item.path;
+      
+      const fileIdx = isOverlay ? selectedOverlayFiles.findIndex(f => f.path === item.path) : -1;
+      const assignedColor = fileIdx !== -1 ? OVERLAY_COLORS[fileIdx % OVERLAY_COLORS.length] : null;
+      const isLoading = isOverlay ? loadingOverlayFiles[item.path] : false;
+
+      return (
+        <List.Item 
+          key={item.path}
+          actions={isOverlay ? [
+            <Checkbox 
+              checked={isActive} 
+              onChange={() => onSelectAction(item)}
+              disabled={!isActive && selectedOverlayFiles.length >= 10}
+            >
+              {isActive ? "Selected" : "Select"}
+            </Checkbox>
+          ] : [
+            <Button 
+              type={isActive ? "primary" : "link"} 
+              size="small" 
+              icon={<EyeOutlined />} 
+              onClick={() => onSelectAction(item)}
+            >
+              {isActive ? "Active" : "View"}
+            </Button>
+          ]}
+          style={{ 
+            color: isActive ? '#1890ff' : '#aaa', 
+            background: isActive ? '#111' : 'transparent',
+            padding: '8px 12px',
+            borderLeft: (isOverlay && isActive) ? `4px solid ${assignedColor}` : '4px solid transparent'
+          }}
+        >
+          <Space style={{ flexWrap: 'wrap' }}>
+            {isLoading && <Spin size="small" style={{ marginRight: 8 }} />}
+            <Text style={{ color: isActive ? (isOverlay ? '#fff' : '#1890ff') : '#aaa', wordBreak: 'break-all' }}>{item.rel_path}</Text>
+            {isOverlay && isActive && <Tag color={assignedColor}>Color Badge</Tag>}
+          </Space>
+        </List.Item>
+      )
+    }
+
+    const renderThumbnailView = (items) => {
+      return (
+        <Row gutter={[8, 8]} style={{ padding: '8px 4px' }}>
+          {items.map(item => {
+            const isActive = isOverlay 
+              ? selectedOverlayFiles.some(f => f.path === item.path)
+              : activeFile?.path === item.path;
+            
+            const fileIdx = isOverlay ? selectedOverlayFiles.findIndex(f => f.path === item.path) : -1;
+            const assignedColor = fileIdx !== -1 ? OVERLAY_COLORS[fileIdx % OVERLAY_COLORS.length] : null;
+
+            return (
+              <Col span={12} key={item.path}>
+                <div 
+                  onClick={() => onSelectAction(item)}
+                  style={{
+                    background: isActive ? '#111' : '#1f1f1f',
+                    border: `1.5px solid ${isActive ? (isOverlay ? assignedColor : '#1890ff') : '#303030'}`,
+                    borderRadius: '6px',
+                    padding: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  className="thumbnail-card"
+                >
+                  <div style={{ height: '70px', background: '#000', borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px' }}>
+                    <img 
+                      src={`/api/files/view?path=${encodeURIComponent(item.path)}`}
+                      alt={item.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <Text ellipsis={{ tooltip: item.name }} style={{ color: isActive ? '#fff' : '#aaa', fontSize: '11px', fontWeight: isActive ? 'bold' : 'normal', display: 'block', wordBreak: 'break-all' }}>
+                    {item.name}
+                  </Text>
+                  {isOverlay && isActive && (
+                    <Badge color={assignedColor} style={{ position: 'absolute', top: 4, right: 4 }} />
+                  )}
+                </div>
+              </Col>
+            )
+          })}
+        </Row>
+      )
+    }
+
+    const renderFolderView = (items) => {
+      const grouped = groupFilesByFolder(items)
+      return (
+        <Collapse size="small" ghost expandIconPosition="end" style={{ background: 'transparent' }}>
+          {Object.keys(grouped).sort().map(folder => (
+            <Collapse.Panel 
+              key={folder}
+              header={
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>
+                  <FolderOutlined style={{ marginRight: 6, color: '#faad14' }} /> {folder} ({grouped[folder].length})
+                </span>
+              }
+              style={{ borderBottom: '1px solid #303030' }}
+            >
+              <List
+                size="small"
+                dataSource={grouped[folder]}
+                renderItem={renderListItem}
+              />
+            </Collapse.Panel>
+          ))}
+        </Collapse>
+      )
+    }
+
+    if (viewMode === 'thumbnail') {
+      return renderThumbnailView(sorted)
+    } else if (viewMode === 'folder') {
+      return renderFolderView(sorted)
+    } else {
+      return (
+        <List
+          size="small"
+          dataSource={sorted}
+          renderItem={renderListItem}
+        />
+      )
+    }
+  }
+
+  const renderNanoFiles = (files, viewMode, sortOrder, activeFile, onSelectAction) => {
+    const sorted = sortFilesByName(files, sortOrder)
+
+    const renderListItem = (item) => {
+      const isActive = activeFile?.path === item.path
+      return (
+        <List.Item 
+          key={item.path}
+          actions={[<Button type={isActive ? "primary" : "link"} size="small" icon={<EyeOutlined />} onClick={() => onSelectAction(item)}>{isActive ? "Active" : "Load"}</Button>]}
+          style={{ color: isActive ? '#52c41a' : '#aaa', background: isActive ? '#111' : 'transparent' }}
+        >
+          <Text ellipsis style={{ width: '80%', color: isActive ? '#52c41a' : '#aaa' }}>{item.name}</Text>
+        </List.Item>
+      )
+    }
+
+    const renderThumbnailView = (items) => {
+      return (
+        <Row gutter={[8, 8]} style={{ padding: '8px 4px' }}>
+          {items.map(item => {
+            const isActive = activeFile?.path === item.path
+            return (
+              <Col span={12} key={item.path}>
+                <div 
+                  onClick={() => onSelectAction(item)}
+                  style={{
+                    background: isActive ? '#111' : '#1f1f1f',
+                    border: `1.5px solid ${isActive ? '#52c41a' : '#303030'}`,
+                    borderRadius: '6px',
+                    padding: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'center'
+                  }}
+                  className="thumbnail-card"
+                >
+                  <FileTextOutlined style={{ fontSize: '24px', color: isActive ? '#52c41a' : '#888', marginBottom: '8px', display: 'block' }} />
+                  <Text ellipsis={{ tooltip: item.name }} style={{ color: isActive ? '#fff' : '#aaa', fontSize: '11px', fontWeight: isActive ? 'bold' : 'normal', display: 'block' }}>
+                    {item.name}
+                  </Text>
+                </div>
+              </Col>
+            )
+          })}
+        </Row>
+      )
+    }
+
+    if (viewMode === 'thumbnail') {
+      return renderThumbnailView(sorted)
+    } else {
+      return (
+        <List
+          size="small"
+          dataSource={sorted}
+          renderItem={renderListItem}
+        />
+      )
+    }
+  }
 
   // Global settings
   const [smoothData, setSmoothData] = useState(false)
@@ -474,19 +751,10 @@ function App() {
                 <div style={{ padding: '15px', background: '#141414', flex: 1, overflow: 'auto' }}>
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     <Card title={<><CameraOutlined /> Ozray 1_photos_linescan</>} size="small" bordered={false} style={{ background: '#1f1f1f' }}>
-                      <List
-                        size="small"
-                        dataSource={ozrayFiles}
-                        renderItem={item => (
-                          <List.Item 
-                            actions={[<Button type={activeOzrayFile?.path === item.path ? "primary" : "link"} size="small" icon={<EyeOutlined />} onClick={() => loadOzrayData(item)}>{activeOzrayFile?.path === item.path ? "Active" : "View"}</Button>]}
-                            style={{ color: activeOzrayFile?.path === item.path ? '#1890ff' : '#aaa', background: activeOzrayFile?.path === item.path ? '#111' : 'transparent' }}
-                          >
-                            <Text style={{ color: activeOzrayFile?.path === item.path ? '#1890ff' : '#aaa', wordBreak: 'break-all' }}>{item.rel_path}</Text>
-                          </List.Item>
-                        )}
-                        style={{ maxHeight: '200px', overflow: 'auto' }}
-                      />
+                      {renderListControls(ozrayViewMode, setOzrayViewMode, ozraySortOrder, setOzraySortOrder, true)}
+                      <div style={{ maxHeight: '250px', overflow: 'auto' }}>
+                        {renderOzrayFiles(ozrayFiles, ozrayViewMode, ozraySortOrder, activeOzrayFile, loadOzrayData, false)}
+                      </div>
                     </Card>
                     
                     {loadingOzray ? <div style={{ textAlign: 'center', padding: '20px' }}><Spin tip="Loading RAW Cube..." /></div> : (
@@ -526,19 +794,10 @@ function App() {
                 <div style={{ padding: '15px', background: '#141414', flex: 1, overflow: 'auto' }}>
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     <Card title={<><LineChartOutlined /> NanoLambda 2_nanolambda</>} size="small" bordered={false} style={{ background: '#1f1f1f' }}>
-                      <List
-                        size="small"
-                        dataSource={nanoFiles}
-                        renderItem={item => (
-                          <List.Item 
-                            actions={[<Button type={activeNanoFile?.path === item.path ? "primary" : "link"} size="small" icon={<EyeOutlined />} onClick={() => loadNanoData(item)}>{activeNanoFile?.path === item.path ? "Active" : "Load"}</Button>]}
-                            style={{ color: activeNanoFile?.path === item.path ? '#52c41a' : '#aaa', background: activeNanoFile?.path === item.path ? '#111' : 'transparent' }}
-                          >
-                            <Text ellipsis style={{ width: '80%', color: activeNanoFile?.path === item.path ? '#52c41a' : '#aaa' }}>{item.name}</Text>
-                          </List.Item>
-                        )}
-                        style={{ maxHeight: '200px', overflow: 'auto' }}
-                      />
+                      {renderListControls(nanoViewMode, setNanoViewMode, nanoSortOrder, setNanoSortOrder, false)}
+                      <div style={{ maxHeight: '250px', overflow: 'auto' }}>
+                        {renderNanoFiles(nanoFiles, nanoViewMode, nanoSortOrder, activeNanoFile, loadNanoData)}
+                      </div>
                     </Card>
 
                     <Card title={<><SettingOutlined /> Data Processing</>} size="small" bordered={false} style={{ background: '#1f1f1f' }}>
@@ -631,43 +890,10 @@ function App() {
                       <div style={{ marginBottom: '10px' }}>
                         <Text type="secondary">Select between 2 to 10 linescan images below to overlay them. Each file will be assigned a unique color.</Text>
                       </div>
-                      <List
-                        size="small"
-                        dataSource={ozrayFiles}
-                        renderItem={(item) => {
-                          const isSelected = selectedOverlayFiles.some(f => f.path === item.path);
-                          const fileIdx = selectedOverlayFiles.findIndex(f => f.path === item.path);
-                          const assignedColor = fileIdx !== -1 ? OVERLAY_COLORS[fileIdx % OVERLAY_COLORS.length] : null;
-                          const isLoading = loadingOverlayFiles[item.path];
-                          
-                          return (
-                            <List.Item 
-                              actions={[
-                                <Checkbox 
-                                  checked={isSelected} 
-                                  onChange={() => toggleOverlayFile(item)}
-                                  disabled={!isSelected && selectedOverlayFiles.length >= 10}
-                                >
-                                  {isSelected ? "Selected" : "Select"}
-                                </Checkbox>
-                              ]}
-                              style={{ 
-                                color: isSelected ? '#1890ff' : '#aaa', 
-                                background: isSelected ? '#111' : 'transparent',
-                                padding: '8px 12px',
-                                borderLeft: isSelected ? `4px solid ${assignedColor}` : '4px solid transparent'
-                              }}
-                            >
-                              <Space style={{ flexWrap: 'wrap' }}>
-                                {isLoading && <Spin size="small" style={{ marginRight: 8 }} />}
-                                <Text style={{ color: isSelected ? '#fff' : '#aaa', wordBreak: 'break-all' }}>{item.rel_path}</Text>
-                                {isSelected && <Tag color={assignedColor}>Color Badge</Tag>}
-                              </Space>
-                            </List.Item>
-                          );
-                        }}
-                        style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid #303030', borderRadius: '4px' }}
-                      />
+                      {renderListControls(overlayViewMode, setOverlayViewMode, overlaySortOrder, setOverlaySortOrder, true)}
+                      <div style={{ maxHeight: '250px', overflow: 'auto', border: '1px solid #303030', borderRadius: '4px' }}>
+                        {renderOzrayFiles(ozrayFiles, overlayViewMode, overlaySortOrder, null, toggleOverlayFile, true)}
+                      </div>
                     </Card>
 
                     {/* Active Overlay Images Display */}

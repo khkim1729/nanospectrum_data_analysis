@@ -81,6 +81,17 @@ async def get_preview(filename: str):
         raise HTTPException(status_code=404)
     return FileResponse(path)
 
+@app.get("/api/files/view")
+async def view_file(path: str):
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    # Security check: ensure path is within DATA_ROOT
+    abs_path = os.path.abspath(path)
+    abs_root = os.path.abspath(DATA_ROOT)
+    if not abs_path.startswith(abs_root):
+        raise HTTPException(status_code=403, detail="Access denied")
+    return FileResponse(path)
+
 @app.get("/api/ozray/spectrum")
 async def get_ozray_spectrum(raw_path: str, hdr_path: str, x: int, y: int):
     metadata = parse_hdr(hdr_path)
