@@ -482,7 +482,7 @@ function App() {
                             actions={[<Button type={activeOzrayFile?.path === item.path ? "primary" : "link"} size="small" icon={<EyeOutlined />} onClick={() => loadOzrayData(item)}>{activeOzrayFile?.path === item.path ? "Active" : "View"}</Button>]}
                             style={{ color: activeOzrayFile?.path === item.path ? '#1890ff' : '#aaa', background: activeOzrayFile?.path === item.path ? '#111' : 'transparent' }}
                           >
-                            <Text ellipsis style={{ width: '80%', color: activeOzrayFile?.path === item.path ? '#1890ff' : '#aaa' }}>{item.rel_path}</Text>
+                            <Text style={{ color: activeOzrayFile?.path === item.path ? '#1890ff' : '#aaa', wordBreak: 'break-all' }}>{item.rel_path}</Text>
                           </List.Item>
                         )}
                         style={{ maxHeight: '200px', overflow: 'auto' }}
@@ -658,9 +658,9 @@ function App() {
                                 borderLeft: isSelected ? `4px solid ${assignedColor}` : '4px solid transparent'
                               }}
                             >
-                              <Space>
+                              <Space style={{ flexWrap: 'wrap' }}>
                                 {isLoading && <Spin size="small" style={{ marginRight: 8 }} />}
-                                <Text ellipsis={{ tooltip: item.rel_path }} style={{ width: '250px', color: isSelected ? '#fff' : '#aaa' }}>{item.rel_path}</Text>
+                                <Text style={{ color: isSelected ? '#fff' : '#aaa', wordBreak: 'break-all' }}>{item.rel_path}</Text>
                                 {isSelected && <Tag color={assignedColor}>Color Badge</Tag>}
                               </Space>
                             </List.Item>
