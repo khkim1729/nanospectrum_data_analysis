@@ -221,7 +221,7 @@ function App() {
             const assignedColor = fileIdx !== -1 ? OVERLAY_COLORS[fileIdx % OVERLAY_COLORS.length] : null;
 
             return (
-              <Col span={12} key={item.path}>
+              <Col span={8} key={item.path}>
                 <div 
                   onClick={() => onSelectAction(item)}
                   style={{
@@ -236,11 +236,11 @@ function App() {
                   }}
                   className="thumbnail-card"
                 >
-                  <div style={{ height: '70px', background: '#000', borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px' }}>
+                  <div style={{ height: '140px', background: '#0a0a0a', borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px' }}>
                     <img 
                       src={`/api/files/view?path=${encodeURIComponent(item.path)}`}
                       alt={item.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.9 }}
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.style.display = 'none';
@@ -323,7 +323,7 @@ function App() {
           {items.map(item => {
             const isActive = activeFile?.path === item.path
             return (
-              <Col span={12} key={item.path}>
+              <Col span={8} key={item.path}>
                 <div 
                   onClick={() => onSelectAction(item)}
                   style={{
@@ -752,7 +752,7 @@ function App() {
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     <Card title={<><CameraOutlined /> Ozray 1_photos_linescan</>} size="small" bordered={false} style={{ background: '#1f1f1f' }}>
                       {renderListControls(ozrayViewMode, setOzrayViewMode, ozraySortOrder, setOzraySortOrder, true)}
-                      <div style={{ maxHeight: '250px', overflow: 'auto' }}>
+                      <div style={{ maxHeight: '450px', overflow: 'auto' }}>
                         {renderOzrayFiles(ozrayFiles, ozrayViewMode, ozraySortOrder, activeOzrayFile, loadOzrayData, false)}
                       </div>
                     </Card>
@@ -795,7 +795,7 @@ function App() {
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     <Card title={<><LineChartOutlined /> NanoLambda 2_nanolambda</>} size="small" bordered={false} style={{ background: '#1f1f1f' }}>
                       {renderListControls(nanoViewMode, setNanoViewMode, nanoSortOrder, setNanoSortOrder, false)}
-                      <div style={{ maxHeight: '250px', overflow: 'auto' }}>
+                      <div style={{ maxHeight: '450px', overflow: 'auto' }}>
                         {renderNanoFiles(nanoFiles, nanoViewMode, nanoSortOrder, activeNanoFile, loadNanoData)}
                       </div>
                     </Card>
@@ -891,7 +891,7 @@ function App() {
                         <Text type="secondary">Select between 2 to 10 linescan images below to overlay them. Each file will be assigned a unique color.</Text>
                       </div>
                       {renderListControls(overlayViewMode, setOverlayViewMode, overlaySortOrder, setOverlaySortOrder, true)}
-                      <div style={{ maxHeight: '250px', overflow: 'auto', border: '1px solid #303030', borderRadius: '4px' }}>
+                      <div style={{ maxHeight: '450px', overflow: 'auto', border: '1px solid #303030', borderRadius: '4px' }}>
                         {renderOzrayFiles(ozrayFiles, overlayViewMode, overlaySortOrder, null, toggleOverlayFile, true)}
                       </div>
                     </Card>
